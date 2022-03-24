@@ -1,0 +1,1 @@
+'C:\Program Files\IronPython 2.7\ipyc.exe' /main:win_test.py /platform:x86 /embed /standalone /target:exe 'C:\Program Files\IronPython 2.7\Lib\subprocess.py' 'C:\Program Files\IronPython 2.7\Lib\os.py'

@@ -1,0 +1,6 @@
+.idea
+.git
+.env
+*.exe
+*.dll
+/config_bk.json

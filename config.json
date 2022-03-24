@@ -1,0 +1,17 @@
+{
+  "medoc_service": "Wecsvc",
+  "db_path": "D:\\",
+  "winrar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
+  "db_file": "D:\\3" ,
+  "bkp_file_format": "{}zvit{}.rar",
+  "bkp_path": [
+    "d:\\1",
+    "d:\\2"
+  ],
+  "from_mail": "test@test.com",
+  "to_mail": "test@test.com",
+  "server": "localhost",
+  "port": 25,
+  "safe_time": 3,
+  "service_reaction": 60
+}
