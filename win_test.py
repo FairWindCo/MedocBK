@@ -1,15 +1,4 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-# 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:test_sharp2.py  /embed /platform:x86 /standalone /target:winexe
-# 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:test_sharp2.py  /embed /platform:x86 /standalone /target:winexe
-# & 'C:\Program Files\IronPython 3.4\ipyc.exe' /main:win_test.py /platform:x86 /standalone /target:exe
-# & 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:win_test.py /platform:x86 /embed /standalone /target:exe
-
-#  & 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:win_test.py /platform:x86 /embed /standalone /target:exe 'C:\Program Files\IronPython 2.7\L
-# ib\subprocess.py' 'C:\Program Files\IronPython 2.7\Lib\os.py' 'C:\Program Files\IronPython 2.7\Lib\smtplib.py' 'C:\Program Files\IronPython 2.7\Lib\os.py'
-#
+#  & 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:win_test.py /platform:x86 /embed /standalone /target:exe
 import clr
 clr.AddReference("System.ServiceProcess")
 clr.AddReference("IronPython")
@@ -45,8 +34,11 @@ def Main(args):
 
 
     def send_mail(message):
-        smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        smtp.sendmail(FROM_MAIL, TO_MAIL, message)
+        try:
+            smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            smtp.sendmail(FROM_MAIL, TO_MAIL, message)
+        except Exception:
+            pass
 
 
     def get_full_paths(db_path):
@@ -122,5 +114,4 @@ def Main(args):
         exit(-2)
 
 if __name__ == "__main__":
-    sys.path.insert(0, "Lib")
     Main(sys.argv[1:])
