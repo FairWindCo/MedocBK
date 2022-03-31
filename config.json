@@ -1,7 +1,7 @@
 {
   "medoc_service": "Wecsvc",
   "db_path": "D:\\",
-  "winrar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
+  "ignore_service": true,
   "db_file": "D:\\3" ,
   "bkp_file_format": "{}zvit{}.rar",
   "bkp_path": [
@@ -12,6 +12,9 @@
   "to_mail": "test@test.com",
   "server": "localhost",
   "port": 25,
-  "safe_time": 3,
-  "service_reaction": 60
+  "safe_time": 0,
+  "remove_old_file": true,
+  "service_reaction": 60,
+  "zip_compression": 0,
+  "public_key": "public.pem"
 }

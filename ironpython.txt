@@ -1,0 +1,10 @@
+INSTALL PYTHON MODULE
+
+
+run cmd as administrator and type the following command
+
+ipy -X:Frames -m ensurepip
+
+now you can install everything is done, you can simply add any package by following command
+
+ipy -X:Frames -m pip install Package
