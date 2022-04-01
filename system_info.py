@@ -158,6 +158,7 @@ def form_host_info_json(small_info=False):
             {'SystemFamily': info['Win32_ComputerSystem']['infos'][0]['SystemFamily'],
              'Model': info['Win32_ComputerSystem']['infos'][0]['Model'],
              'Domain': info['Win32_ComputerSystem']['infos'][0]['Domain'],
+             'sysname': info['Win32_OperatingSystem']['infos'][0]['Caption'],
              'Manufacturer': info['Win32_ComputerSystem']['infos'][0]['Manufacturer'],
              'TotalPhysicalMemory': str(info['Win32_ComputerSystem']['infos'][0]['TotalPhysicalMemory']),
              'NumberOfProcessors': int(info['Win32_ComputerSystem']['infos'][0]['NumberOfProcessors']),
@@ -192,19 +193,33 @@ def get_ip_list():
     return [ip.ToString() for ip in host.AddressList if ip.AddressFamily == AddressFamily.InterNetwork]
 
 
-def send_request(message, url, csrf):
+def send_request(message, url, csrf, proxy=None):
     import urllib2
     import urllib
+    if proxy:
+        handler = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener = urllib2.build_opener(handler)
+        urllib2.install_opener(opener)
+
     post = urllib.quote(message)
     req = urllib2.Request(url, post)
     req.add_header('X-CSRFToken', csrf)
     req.add_header('Cookie', 'csrftoken={}'.format(csrf))
-    response = urllib2.urlopen(req)
-    return response.read()
+    try:
+        response = urllib2.urlopen(req)
+        return response.read()
+    except urllib2.HTTPError as e:
+        print e.code, e.message, e.reason
 
 
-def get_request(url):
+
+def get_request(url, proxy=None):
     import urllib2
+    if proxy:
+        handler = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener = urllib2.build_opener(handler)
+        urllib2.install_opener(opener)
+
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     text = response.read()
@@ -247,9 +262,13 @@ def log_message(info, config=None):
         config = {}
     url_token = config.get('token_url', 'http://127.0.0.1:8000/token')
     url_special = config.get('special_url', 'http://127.0.0.1:8000/host_info_update')
-    csrf = get_request(url_token)
+    proxy = config.get('proxy', None)
+    print "Try Get CSRF Tolken"
+    csrf = get_request(url_token, proxy=proxy)
+    print csrf
     mes = encrypt_message(info, False, config)
-    send_request(mes, url_special, csrf)
+    print "Try Send"
+    print send_request(mes, url_special, csrf, proxy=proxy)
 
 
 if __name__ == "__main__":
@@ -263,8 +282,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--soft', dest='soft', action='store_true')
     parser.add_argument('-f', dest='save')
-    parser.add_argument('-p', dest='echo')
-    parser.add_argument('-s', dest='skip')
+    parser.add_argument('-p', dest='echo', action='store_true')
+    parser.add_argument('-s', dest='skip', action='store_true')
 
     arguments = parser.parse_args()
     info = form_host_info_json(arguments.soft)
@@ -284,7 +303,7 @@ if __name__ == "__main__":
     if arguments.save:
         f = open(arguments.save, 'wt')
         try:
-            f.write(json.dumps(config))
+            f.write(json.dumps(info))
         finally:
             f.close()
     if not arguments.skip:
