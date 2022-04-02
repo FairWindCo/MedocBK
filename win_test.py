@@ -33,6 +33,14 @@ def Main(args):
     BKP_PATH = config.get('bkp_path', [])
     SAFE_TIME = config.get('safe_time', 0)
     REMOVE_OLD_FILE = config.get('remove_old_file', True)
+    SEND_REPORT_MAIL = config.get('send_report_mail', True)
+    SEND_REPORT_WEB = config.get('send_report_web', True)
+
+    def send_report_error(message):
+        if SEND_REPORT_MAIL:
+            send_mail(message)
+        if SEND_REPORT_WEB:
+            log_message(message, True)
 
     if config.get('ignore_service', False):
         SERVICE = None
@@ -62,7 +70,6 @@ def Main(args):
                 'key': key
             })
             return mes
-        return None
 
     def send_mail(message):
         SMTP_SERVER = config.get('server', '127.0.0.1')
@@ -94,7 +101,7 @@ def Main(args):
             exec_rar += (1 if subprocess.call(
                 [winrar_path, 'a', '-dh', dst_path, file_path]) == 0 else 0)
         if exec_rar < len(path_list):
-            send_mail("NOT ALL FILE ARCHIVED")
+            send_report_error("NOT ALL FILE ARCHIVED")
 
     def archive_file_zip(path_to_archive, dst_path):
         ZIP_COMPRESSION = config.get('zip_compression', 8)
@@ -106,7 +113,7 @@ def Main(args):
             finally:
                 zipObj.close()
         except Exception as e:
-            send_mail("ZIP ERROR " + e.message)
+            send_report_error("ZIP ERROR " + e.message)
 
     def stop_service(service_name, service_wait_time=60):
         if service_name:
@@ -118,7 +125,7 @@ def Main(args):
                 service = ServiceController(service_name)
                 print service.Status
             if service.Status != ServiceControllerStatus.Stopped:
-                send_mail("Service {} is not stopped".format(service_name))
+                send_report_error("Service {} is not stopped".format(service_name))
                 sys.exit(-1)
 
     def start_service(service_name, service_wait_time=60):
@@ -129,9 +136,9 @@ def Main(args):
                 time.sleep(service_wait_time)
                 service = ServiceController(service_name)
                 if service.Status != ServiceControllerStatus.Running:
-                    send_mail("Service not started")
+                    send_report_error("Service not started")
             except Exception:
-                send_mail("Service not started")
+                send_report_error("Service not started")
 
     def archive_file(path_to_archive, dst_path, winrar_path):
         if path_to_archive:
@@ -176,14 +183,14 @@ def Main(args):
         obj_dict = json.loads(text)
         return obj_dict.get('csrf', None)
 
-    def log_message(message):
+    def log_message(message, state_error=False):
         url_token = config.get('token_url', 'http://127.0.0.1:8000/token')
         url_special = config.get('special_url', 'http://127.0.0.1:8000/special')
         csrf = get_request(url_token)
-        mes = encrypt_message(message)
+        mes = encrypt_message(message, state_error)
         send_request(mes, url_special, csrf)
 
-    log_message("START")
+    log_message("START BACKUP")
     s_path = get_result_path(WINRAR)
     if s_path:
         stop_service(SERVICE, SERVICE_REACTION)
@@ -200,7 +207,7 @@ def Main(args):
                 shutil.copy(s_path, d_path)
                 file_copy += 1
             except Exception:
-                send_mail("Can`t copy to {}".format(d_path))
+                send_report_error("Can`t copy to {}".format(d_path))
             days_before = (time.time() - SAFE_TIME * 86400)
 
             if REMOVE_OLD_FILE:
@@ -214,7 +221,7 @@ def Main(args):
 
         log_message("WELL DONE")
     else:
-        send_mail("NO TMP PATH")
+        send_report_error("NO TMP PATH")
         exit(-2)
 
 
