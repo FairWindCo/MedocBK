@@ -52,6 +52,21 @@ def get_wmi_futures():
     return []
 
 
+def get_hot_fix():
+    try:
+        mos = ManagementObjectSearcher("select HotFixID, InstalledOn  from Win32_QuickFixEngineering")
+        if mos:
+            list_fix = [(
+                mo['HotFixID'],
+                mo['InstalledOn']
+            ) for mo in mos.Get()]
+            print list_fix
+            return list_fix
+    except Exception as e:
+        print e
+    return []
+
+
 def get_reg_key(current_user=False, is64=False):
     if is64:
         key = "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
@@ -212,7 +227,6 @@ def send_request(message, url, csrf, proxy=None):
         print e.code, e.message, e.reason
 
 
-
 def get_request(url, proxy=None):
     import urllib2
     if proxy:
@@ -236,13 +250,13 @@ def load_key(key_path):
         f.close()
 
 
-def encrypt_message(info, state_error=False, config=None):
+def encrypt_message(info, state_error=False, config=None, use_platform_host=True):
     if config is None:
         config = {}
     PUBLIC_KEY_FILE = config.get('public_key', None)
     if PUBLIC_KEY_FILE and os.path.exists(PUBLIC_KEY_FILE) and os.path.isfile(PUBLIC_KEY_FILE):
         public_key = load_key(PUBLIC_KEY_FILE)
-        host = platform.node()
+        host = platform.node() if use_platform_host else info.get('host', '')
         key = base64.b64encode(encrypt(host + datetime.now().strftime("%d%m%y%H%M%S"), pub_key=public_key))
         info['key'] = key
         print info
@@ -257,7 +271,7 @@ def get_config(config_file='config.json'):
     return config
 
 
-def log_message(info, config=None):
+def log_message(info, config=None, use_platform_host=True):
     if config is None:
         config = {}
     url_token = config.get('token_url', 'http://127.0.0.1:8000/token')
@@ -266,7 +280,7 @@ def log_message(info, config=None):
     print "Try Get CSRF Tolken"
     csrf = get_request(url_token, proxy=proxy)
     print csrf
-    mes = encrypt_message(info, False, config)
+    mes = encrypt_message(info, False, config, use_platform_host)
     print "Try Send"
     print send_request(mes, url_special, csrf, proxy=proxy)
 
@@ -282,31 +296,45 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--soft', dest='soft', action='store_true')
     parser.add_argument('-f', dest='save')
+    parser.add_argument('-l', dest='load')
     parser.add_argument('-p', dest='echo', action='store_true')
     parser.add_argument('-s', dest='skip', action='store_true')
 
     arguments = parser.parse_args()
-    info = form_host_info_json(arguments.soft)
-
-    info['services'] = get_services()
-
-    info['soft'] = [{
-        'name': soft[0],
-        'version': soft[1],
-        'installed': soft[2]
-    } for soft in get_wmi_soft()]
-
-    info['ip'] = get_ip_list()
-    info['futures'] = get_wmi_futures()
     config = get_config()
 
-    if arguments.save:
-        f = open(arguments.save, 'wt')
+    if arguments.load:
+        use_platform_host = False
+        f = open(arguments.load, 'rt')
         try:
-            f.write(json.dumps(info))
+            json_str = f.read()
+            info = json.loads(json_str)
         finally:
             f.close()
+
+    else:
+        use_platform_host = True
+        info = form_host_info_json(arguments.soft)
+
+        info['services'] = get_services()
+
+        info['soft'] = [{
+            'name': soft[0],
+            'version': soft[1],
+            'installed': soft[2]
+        } for soft in get_wmi_soft()]
+
+        info['ip'] = get_ip_list()
+        info['futures'] = get_wmi_futures()
+        info['hotfix'] = get_hot_fix()
+
+        if arguments.save:
+            f = open(arguments.save, 'wt')
+            try:
+                f.write(json.dumps(info))
+            finally:
+                f.close()
     if not arguments.skip:
-        log_message(info, config)
+        log_message(info, config, use_platform_host)
     if arguments.echo:
         print info
