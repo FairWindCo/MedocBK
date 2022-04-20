@@ -1,18 +1,17 @@
 {
-  "medoc_service": "Wecsvc",
-  "db_path": "D:\\",
-  "ignore_service": true,
-  "db_file": "D:\\3" ,
-  "bkp_file_format": "{}zvit{}.rar",
+  "medoc_service": "ZvitGrp1",
+  "db_path": "C:\\ProgramData\\Medoc\\MedocSRV\\db\\",
+  "winrar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
+  "db_file": "C:\\ProgramData\\Medoc\\MedocSRV\\db\\zvit.fdb",
   "bkp_path": [
-    "d:\\1",
-    "d:\\2"
+    "\\\\bkp0101.bs.local.erc\\medoc$\\backup",
+    "\\\\bkp0201.bs.local.erc\\medoc$\\backup"
   ],
-  "from_mail": "test@test.com",
-  "to_mail": "test@test.com",
-  "server": "localhost",
+  "from_mail": "bspd@erc.ua",
+  "to_mail": "bspd@erc.ua",
+  "server": "web02.local.erc",
   "port": 25,
-  "safe_time": 0,
+  "safe_time": 4,
   "remove_old_file": true,
   "service_reaction": 60,
   "zip_compression": 0,

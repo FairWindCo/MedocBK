@@ -1,0 +1,8 @@
+{
+  "server": "",
+  "db": "",
+  "user": "",
+  "pass": "",
+  "dont_use_user": true,
+  "connect_url": "test"
+}

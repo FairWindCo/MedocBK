@@ -1,3 +1,4 @@
+# & 'C:\Program Files\IronPython 2.7\ipyc.exe' /main:system_info.py utility.py /platform:x86 /embed /standalone /target:exe
 import clr
 
 clr.AddReference("System.ServiceProcess")
@@ -9,15 +10,12 @@ from System.Management import ManagementObjectSearcher
 from System.ServiceProcess import ServiceController, ServiceControllerStatus
 from Microsoft.Win32 import Registry
 import re
-from datetime import datetime
 import platform
 import json
-import os
-import base64
 from System.Net import Dns
 from System.Net.Sockets import AddressFamily
-from rsa import encrypt, PublicKey
 import argparse
+from utility import get_config, send_info_request
 
 
 def clear_name(name, ver):
@@ -208,83 +206,6 @@ def get_ip_list():
     return [ip.ToString() for ip in host.AddressList if ip.AddressFamily == AddressFamily.InterNetwork]
 
 
-def send_request(message, url, csrf, proxy=None):
-    import urllib2
-    import urllib
-    if proxy:
-        handler = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
-        opener = urllib2.build_opener(handler)
-        urllib2.install_opener(opener)
-
-    post = urllib.quote(message)
-    req = urllib2.Request(url, post)
-    req.add_header('X-CSRFToken', csrf)
-    req.add_header('Cookie', 'csrftoken={}'.format(csrf))
-    try:
-        response = urllib2.urlopen(req)
-        return response.read()
-    except urllib2.HTTPError as e:
-        print e.code, e.message, e.reason
-
-
-def get_request(url, proxy=None):
-    import urllib2
-    if proxy:
-        handler = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
-        opener = urllib2.build_opener(handler)
-        urllib2.install_opener(opener)
-
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    text = response.read()
-    obj_dict = json.loads(text)
-    return obj_dict.get('csrf', None)
-
-
-def load_key(key_path):
-    f = open(key_path, 'rb')
-    try:
-        key = f.read()
-        return PublicKey.load_pkcs1(key)
-    finally:
-        f.close()
-
-
-def encrypt_message(info, state_error=False, config=None, use_platform_host=True):
-    if config is None:
-        config = {}
-    PUBLIC_KEY_FILE = config.get('public_key', None)
-    if PUBLIC_KEY_FILE and os.path.exists(PUBLIC_KEY_FILE) and os.path.isfile(PUBLIC_KEY_FILE):
-        public_key = load_key(PUBLIC_KEY_FILE)
-        host = platform.node() if use_platform_host else info.get('host', '')
-        key = base64.b64encode(encrypt(host + datetime.now().strftime("%d%m%y%H%M%S"), pub_key=public_key))
-        info['key'] = key
-        print info
-        mes = json.dumps(info)
-        return mes
-    return None
-
-
-def get_config(config_file='config.json'):
-    json_data = open(config_file).read()
-    config = json.loads(json_data)
-    return config
-
-
-def log_message(info, config=None, use_platform_host=True):
-    if config is None:
-        config = {}
-    url_token = config.get('token_url', 'http://127.0.0.1:8000/token')
-    url_special = config.get('special_url', 'http://127.0.0.1:8000/host_info_update')
-    proxy = config.get('proxy', None)
-    print "Try Get CSRF Tolken"
-    csrf = get_request(url_token, proxy=proxy)
-    print csrf
-    mes = encrypt_message(info, False, config, use_platform_host)
-    print "Try Send"
-    print send_request(mes, url_special, csrf, proxy=proxy)
-
-
 if __name__ == "__main__":
     # for soft in get_wmi_soft():
     #     print soft
@@ -335,6 +256,6 @@ if __name__ == "__main__":
             finally:
                 f.close()
     if not arguments.skip:
-        log_message(info, config, use_platform_host)
+        send_info_request(info, config, use_platform_host)
     if arguments.echo:
         print info
