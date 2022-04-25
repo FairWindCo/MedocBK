@@ -141,17 +141,20 @@ def send_mail(message, config):
         print "WARNING", e
 
 
-def get_full_paths(db_path):
+def get_full_paths(db_paths):
     result = []
-    if os.path.exists(db_path):
-        if os.path.isfile(db_path):
-            result.append(db_path)
-        elif os.path.isdir(db_path):
-            for (dirpath, dirnames, filenames) in os.walk(db_path):
-                for filename in filenames:
-                    spath = os.path.join(dirpath, filename)
-                    print spath
-                    result.append(spath)
+    if isinstance(db_paths, str):
+        db_paths = [db_paths]
+    for db_path in db_paths:
+        if os.path.exists(db_path):
+            if os.path.isfile(db_path):
+                result.append(db_path)
+            elif os.path.isdir(db_path):
+                for (dirpath, dirnames, filenames) in os.walk(db_path):
+                    for filename in filenames:
+                        spath = os.path.join(dirpath, filename)
+                        print spath
+                        result.append(spath)
     return result
 
 
